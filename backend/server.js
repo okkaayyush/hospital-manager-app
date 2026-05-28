@@ -9,9 +9,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/doctors', require('./routes/doctors'));
+app.use('/api/appointments', require('./routes/appointments'));
+app.use('/api/admin', require('./routes/admin'));
+
 // Test route
 app.get('/', (req, res) => {
-  res.send('Hospital Manager App Backend is running!');
+  res.send('Hospital App Backend is running!');
 });
 
 // Connect to MongoDB
