@@ -62,4 +62,14 @@ router.delete('/users/:id', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
+// GET all doctors (including unapproved)
+router.get('/doctors', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const doctors = await Doctor.find().populate('user', 'name email phone');
+    res.json(doctors);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
