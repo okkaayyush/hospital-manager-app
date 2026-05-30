@@ -17,7 +17,7 @@ function DoctorDashboard() {
   const slots = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'];
   const statusColor = { pending:'#f59e0b', confirmed:'#10b981', cancelled:'#ef4444', completed:'#6366f1' };
 
-  useEffect(() => { fetchProfile(); }, []);
+useEffect(() => { fetchProfile(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProfile = async () => {
     try {

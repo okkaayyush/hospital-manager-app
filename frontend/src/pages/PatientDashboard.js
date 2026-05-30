@@ -12,7 +12,7 @@ function PatientDashboard() {
   const [bookedSlots, setBookedSlots] = useState([]);
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
-  const [lastBooked, setLastBooked] = useState(null);
+  const [, setLastBooked] = useState(null);
 
   const statusColor = { pending:'#f59e0b', confirmed:'#10b981', cancelled:'#ef4444', completed:'#6366f1' };
 
