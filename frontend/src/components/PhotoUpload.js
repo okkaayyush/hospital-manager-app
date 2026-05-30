@@ -45,26 +45,30 @@ function PhotoUpload({ currentPhoto, userName, onUploadSuccess }) {
   }, []);
 
 const uploadCroppedPhoto = async () => {
+  if (!croppedAreaPixels) {
+    console.log('No crop area selected');
+    alert('Please crop the image first');
+    return;
+  }
   setUploading(true);
   try {
     const blob = await getCroppedImg(imageSrc, croppedAreaPixels);
+    console.log('Blob created:', blob);
     const formData = new FormData();
     formData.append('photo', blob, 'photo.jpg');
-    console.log('Uploading to:', 'https://medibook-backend-imgg.onrender.com/api/upload');
     const res = await API.post('/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
-    console.log('Upload response:', res.data);
-    const fullUrl = res.data.url;
-    onUploadSuccess(fullUrl);
+    console.log('Response:', res.data);
+    onUploadSuccess(res.data.url);
     setShowCropper(false);
     setImageSrc(null);
   } catch (err) {
-    console.log('Upload error:', err.response?.data || err.message);
+    console.log('Error:', err);
+    alert(err.response?.data?.message || err.message);
   }
   setUploading(false);
 };
-
   return (
     <div style={s.container}>
       {/* Current Photo */}
