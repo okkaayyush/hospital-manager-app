@@ -9,6 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/upload', require('./routes/upload'));
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/doctors', require('./routes/doctor'));

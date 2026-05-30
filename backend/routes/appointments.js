@@ -91,4 +91,19 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// GET booked slots for a doctor on a specific date
+router.get('/booked-slots/:doctorId/:date', async (req, res) => {
+  try {
+    const appointments = await Appointment.find({
+      doctor: req.params.doctorId,
+      date: req.params.date,
+      status: { $in: ['pending', 'confirmed'] }
+    });
+    const bookedSlots = appointments.map(a => a.timeSlot);
+    res.json(bookedSlots);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
