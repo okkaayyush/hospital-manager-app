@@ -44,24 +44,26 @@ function PhotoUpload({ currentPhoto, userName, onUploadSuccess }) {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
-  const uploadCroppedPhoto = async () => {
-    setUploading(true);
-    try {
-      const blob = await getCroppedImg(imageSrc, croppedAreaPixels);
-      const formData = new FormData();
-      formData.append('photo', blob, 'photo.jpg');
-      const res = await API.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      const fullUrl = `http://localhost:5000${res.data.url}`;
-      onUploadSuccess(fullUrl);
-      setShowCropper(false);
-      setImageSrc(null);
-    } catch (err) {
-      console.log(err);
-    }
-    setUploading(false);
-  };
+const uploadCroppedPhoto = async () => {
+  setUploading(true);
+  try {
+    const blob = await getCroppedImg(imageSrc, croppedAreaPixels);
+    const formData = new FormData();
+    formData.append('photo', blob, 'photo.jpg');
+    console.log('Uploading to:', 'https://medibook-backend-imgg.onrender.com/api/upload');
+    const res = await API.post('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    console.log('Upload response:', res.data);
+    const fullUrl = res.data.url;
+    onUploadSuccess(fullUrl);
+    setShowCropper(false);
+    setImageSrc(null);
+  } catch (err) {
+    console.log('Upload error:', err.response?.data || err.message);
+  }
+  setUploading(false);
+};
 
   return (
     <div style={s.container}>
