@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'https://medibook-backend-imgg.onrender.com/api',
   headers: {
     'Cache-Control': 'no-cache',
     'Pragma': 'no-cache'
