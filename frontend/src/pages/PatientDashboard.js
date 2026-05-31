@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import API from '../api';
+import useWindowSize from '../hooks/useWindowSize';
 import {
   Search, Calendar, Clock, Stethoscope, Building2, DoorOpen,
   IndianRupee, Star, LogOut, ChevronLeft, Printer,
-  X, CheckCircle, AlertCircle, XCircle, Inbox, Hospital
+  X, CheckCircle, AlertCircle, XCircle, Inbox, Hospital, Menu
 } from 'lucide-react';
 
 function PatientDashboard() {
   const { user, logout } = useAuth();
+  const { isMobile } = useWindowSize();
   const [doctors, setDoctors] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [view, setView] = useState('doctors');
@@ -18,12 +20,13 @@ function PatientDashboard() {
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
   const [, setLastBooked] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const statusConfig = {
-    pending:   { color:'#f59e0b', bg:'#f59e0b15', border:'#f59e0b30', icon: <AlertCircle size={12}/> },
-    confirmed: { color:'#10b981', bg:'#10b98115', border:'#10b98130', icon: <CheckCircle size={12}/> },
-    cancelled: { color:'#ef4444', bg:'#ef444415', border:'#ef444430', icon: <XCircle size={12}/> },
-    completed: { color:'#6366f1', bg:'#6366f115', border:'#6366f130', icon: <CheckCircle size={12}/> },
+    pending:   { color:'#f59e0b', bg:'#f59e0b15', border:'#f59e0b30', icon:<AlertCircle size={12}/> },
+    confirmed: { color:'#10b981', bg:'#10b98115', border:'#10b98130', icon:<CheckCircle size={12}/> },
+    cancelled: { color:'#ef4444', bg:'#ef444415', border:'#ef444430', icon:<XCircle size={12}/> },
+    completed: { color:'#6366f1', bg:'#6366f115', border:'#6366f130', icon:<CheckCircle size={12}/> },
   };
 
   useEffect(() => { fetchDoctors(); fetchAppointments(); }, []);
@@ -123,6 +126,59 @@ function PatientDashboard() {
   const specializations = [...new Set(doctors.map(d => d.specialization).filter(Boolean))];
   const pendingCount = appointments.filter(a => a.status === 'pending').length;
 
+  const Sidebar = () => (
+    <div style={{
+      ...s.sidebar,
+      ...(isMobile ? {
+        position:'fixed', top:0, left:0, height:'100vh', zIndex:1000,
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.3s ease',
+        boxShadow: sidebarOpen ? '4px 0 20px rgba(0,0,0,0.5)' : 'none',
+      } : {})
+    }}>
+      <div style={{display:'flex',flexDirection:'column',gap:'0',flex:1}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}}>
+          <div style={s.logoArea}>
+            <div style={s.logoIcon}><Hospital size={20} color="white"/></div>
+            <span style={s.logoText}>MediBook</span>
+          </div>
+          {isMobile && (
+            <button style={s.closeBtn} onClick={()=>setSidebarOpen(false)}>
+              <X size={18}/>
+            </button>
+          )}
+        </div>
+
+        <div style={s.profileCard}>
+          <img src={avatarUrl(user.name,'0f766e')} alt={user.name} style={s.profileAvatar}/>
+          <div>
+            <p style={s.profileName}>{user.name}</p>
+            <p style={s.profileRole}>Patient</p>
+          </div>
+        </div>
+
+        <div style={s.divider}/>
+
+        <nav style={{display:'flex',flexDirection:'column',gap:'2px'}}>
+          <button style={view==='doctors'?s.navActive:s.nav}
+            onClick={()=>{setView('doctors');setSelectedDoctor(null);setSidebarOpen(false);}}>
+            <Stethoscope size={16}/>
+            <span>Find Doctors</span>
+          </button>
+          <button style={view==='appointments'?s.navActive:s.nav}
+            onClick={()=>{setView('appointments');setSidebarOpen(false);}}>
+            <Calendar size={16}/>
+            <span>My Appointments</span>
+            {pendingCount > 0 && <span style={s.navBadge}>{pendingCount}</span>}
+          </button>
+        </nav>
+      </div>
+      <button style={s.logoutBtn} onClick={logout}>
+        <LogOut size={15}/> Sign Out
+      </button>
+    </div>
+  );
+
   return (
     <div style={s.page}>
       <style>{`
@@ -132,248 +188,240 @@ function PatientDashboard() {
         input:focus, textarea:focus, select:focus { border-color: #334155 !important; outline: none; }
         select option { background: #0d1117; color: #f1f5f9; }
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-        .nav-btn:hover { background: #1e293b !important; color: #f1f5f9 !important; }
-        .doc-card:hover { border-color: #334155 !important; transform: translateY(-2px); transition: all 0.2s; }
+        .doc-card:hover { border-color: #334155 !important; }
         .book-btn:hover { background: #1d4ed8 !important; }
-        .slot-btn:hover { border-color: #2563eb !important; color: #60a5fa !important; }
       `}</style>
 
-      {/* Sidebar */}
-      <div style={s.sidebar}>
-        <div style={{display:'flex',flexDirection:'column',gap:'0',flex:1}}>
-          {/* Logo */}
-          <div style={s.logoArea}>
-            <div style={s.logoIcon}><Hospital size={20} color="white"/></div>
-            <span style={s.logoText}>MediBook</span>
-          </div>
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div style={s.overlay} onClick={()=>setSidebarOpen(false)}/>
+      )}
 
-          {/* Profile */}
-          <div style={s.profileCard}>
-            <img src={avatarUrl(user.name,'0f766e')} alt={user.name} style={s.profileAvatar}/>
-            <div>
-              <p style={s.profileName}>{user.name}</p>
-              <p style={s.profileRole}>Patient</p>
-            </div>
-          </div>
-
-          <div style={s.divider}/>
-
-          {/* Nav */}
-          <nav style={{display:'flex',flexDirection:'column',gap:'2px'}}>
-            <button className="nav-btn" style={view==='doctors'?s.navActive:s.nav}
-              onClick={()=>{setView('doctors');setSelectedDoctor(null);}}>
-              <Stethoscope size={16}/>
-              <span>Find Doctors</span>
-            </button>
-            <button className="nav-btn" style={view==='appointments'?s.navActive:s.nav}
-              onClick={()=>setView('appointments')}>
-              <Calendar size={16}/>
-              <span>My Appointments</span>
-              {pendingCount > 0 && <span style={s.navBadge}>{pendingCount}</span>}
-            </button>
-          </nav>
-        </div>
-
-        <button style={s.logoutBtn} onClick={logout}>
-          <LogOut size={15}/> Sign Out
-        </button>
-      </div>
+      <Sidebar/>
 
       {/* Main */}
-      <div style={s.main}>
-        {message && (
-          <div style={s.toast}>
-            <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-              <CheckCircle size={16} color="#4ade80"/>
-              {message}
-            </div>
-            <button onClick={()=>setMessage('')} style={s.toastClose}><X size={14}/></button>
-          </div>
-        )}
+      <div style={{...s.main, ...(isMobile?{padding:'0'}:{})}}>
 
-        {/* Find Doctors */}
-        {view === 'doctors' && !selectedDoctor && (
-          <div>
-            <div style={s.pageHeader}>
-              <div>
-                <h2 style={s.heading}>Find a Doctor</h2>
-                <p style={s.subheading}>{filteredDoctors.length} doctors available</p>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div style={s.searchWrapper}>
-              <Search size={16} color="#475569" style={{position:'absolute',left:'14px',top:'50%',transform:'translateY(-50%)'}}/>
-              <input style={s.searchInput} placeholder="Search by name, specialization or department..."
-                value={search} onChange={e=>setSearch(e.target.value)}/>
-            </div>
-
-            {/* Filter Pills */}
-            <div style={s.pillRow}>
-              <button style={{...s.pill,...(search===''?s.pillActive:{})}} onClick={()=>setSearch('')}>All</button>
-              {specializations.map(spec=>(
-                <button key={spec} style={{...s.pill,...(search===spec?s.pillActive:{})}}
-                  onClick={()=>setSearch(spec)}>{spec}</button>
-              ))}
-            </div>
-
-            {filteredDoctors.length === 0 && (
-              <div style={s.emptyState}>
-                <Search size={40} color="#1e293b"/>
-                <p style={{color:'#475569',margin:'12px 0 0 0',fontSize:'15px'}}>No doctors found</p>
-              </div>
-            )}
-
-            <div style={s.grid}>
-              {filteredDoctors.map(doc => (
-                <div key={doc._id} className="doc-card" style={s.docCard}>
-                  <img src={doc.photo||avatarUrl(doc.user?.name)} alt={doc.user?.name}
-                    style={s.docAvatar} onError={e=>e.target.src=avatarUrl(doc.user?.name)}/>
-                  <h3 style={s.docName}>Dr. {doc.user?.name}</h3>
-                  <span style={s.specBadge}>{doc.specialization}</span>
-                  <div style={s.docMeta}>
-                    <div style={s.docMetaRow}><Building2 size={13} color="#475569"/><span>{doc.department}</span></div>
-                    {doc.roomNumber && <div style={s.docMetaRow}><DoorOpen size={13} color="#475569"/><span>{doc.roomNumber}</span></div>}
-                    <div style={s.docMetaRow}><IndianRupee size={13} color="#10b981"/><span style={{color:'#10b981',fontWeight:'600'}}>₹{doc.fees} per visit</span></div>
-                    <div style={s.docMetaRow}><Star size={13} color="#475569"/><span>{doc.experience} yrs experience</span></div>
-                  </div>
-                  <button className="book-btn" style={s.bookBtn} onClick={()=>setSelectedDoctor(doc)}>
-                    Book Appointment
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Booking Form */}
-        {view === 'doctors' && selectedDoctor && (
-          <div style={{maxWidth:'520px'}}>
-            <button style={s.backBtn} onClick={()=>setSelectedDoctor(null)}>
-              <ChevronLeft size={16}/> Back to Doctors
+        {/* Mobile top bar */}
+        {isMobile && (
+          <div style={s.mobileTopBar}>
+            <button style={s.menuBtn} onClick={()=>setSidebarOpen(true)}>
+              <Menu size={20}/>
             </button>
-            <h2 style={s.heading}>Book Appointment</h2>
-            <div style={s.card}>
-              <div style={s.bookingDocInfo}>
-                <img src={selectedDoctor.photo||avatarUrl(selectedDoctor.user?.name)}
-                  alt={selectedDoctor.user?.name} style={s.bookingAvatar}
-                  onError={e=>e.target.src=avatarUrl(selectedDoctor.user?.name)}/>
+            <div style={s.logoArea}>
+              <div style={{...s.logoIcon,width:'26px',height:'26px'}}><Hospital size={16} color="white"/></div>
+              <span style={{...s.logoText,fontSize:'15px'}}>MediBook</span>
+            </div>
+            <div style={{width:'36px'}}/>
+          </div>
+        )}
+
+        <div style={{padding: isMobile ? '16px' : '36px 40px'}}>
+          {message && (
+            <div style={s.toast}>
+              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                <CheckCircle size={16} color="#4ade80"/>{message}
+              </div>
+              <button onClick={()=>setMessage('')} style={s.toastClose}><X size={14}/></button>
+            </div>
+          )}
+
+          {/* Find Doctors */}
+          {view === 'doctors' && !selectedDoctor && (
+            <div>
+              <div style={s.pageHeader}>
                 <div>
-                  <h3 style={{margin:'0 0 6px 0',color:'#f1f5f9',fontSize:'16px',fontWeight:'600'}}>Dr. {selectedDoctor.user?.name}</h3>
-                  <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
-                    <div style={s.docMetaRow}><Stethoscope size={13} color="#475569"/><span style={{color:'#94a3b8',fontSize:'13px'}}>{selectedDoctor.specialization}</span></div>
-                    <div style={s.docMetaRow}><Building2 size={13} color="#475569"/><span style={{color:'#94a3b8',fontSize:'13px'}}>{selectedDoctor.department}{selectedDoctor.roomNumber&&` · ${selectedDoctor.roomNumber}`}</span></div>
-                    <div style={s.docMetaRow}><IndianRupee size={13} color="#10b981"/><span style={{color:'#10b981',fontSize:'13px',fontWeight:'600'}}>₹{selectedDoctor.fees} per visit</span></div>
-                  </div>
+                  <h2 style={{...s.heading,...(isMobile?{fontSize:'18px'}:{})}}>Find a Doctor</h2>
+                  <p style={s.subheading}>{filteredDoctors.length} doctors available</p>
                 </div>
               </div>
 
-              <div style={s.divider}/>
+              <div style={s.searchWrapper}>
+                <Search size={16} color="#475569" style={{position:'absolute',left:'14px',top:'50%',transform:'translateY(-50%)'}}/>
+                <input style={s.searchInput} placeholder="Search by name, specialization..."
+                  value={search} onChange={e=>setSearch(e.target.value)}/>
+              </div>
 
-              <form onSubmit={bookAppointment}>
-                <label style={s.label}>Select Date</label>
-                <select style={s.input} onChange={e=>handleDateChange(e.target.value)} required>
-                  <option value="">Choose an available date</option>
-                  {getAvailableDates(selectedDoctor.availableDays).map(date=>(
-                    <option key={date} value={date}>{date}</option>
-                  ))}
-                </select>
+              <div style={s.pillRow}>
+                <button style={{...s.pill,...(search===''?s.pillActive:{})}} onClick={()=>setSearch('')}>All</button>
+                {specializations.map(spec=>(
+                  <button key={spec} style={{...s.pill,...(search===spec?s.pillActive:{})}}
+                    onClick={()=>setSearch(spec)}>{spec}</button>
+                ))}
+              </div>
 
-                <label style={s.label}>Select Time Slot</label>
-                <div style={s.slotGrid}>
-                  {selectedDoctor.availableTimeSlots.map(slot => {
-                    const isBooked = bookedSlots.includes(slot);
-                    const isSelected = bookingForm.timeSlot === slot;
-                    return (
-                      <div key={slot} className={!isBooked?'slot-btn':''} style={{
-                        ...s.slotBtn,
-                        background: isBooked?'#0d1117':isSelected?'#2563eb':'transparent',
-                        color: isBooked?'#1e293b':isSelected?'white':'#64748b',
-                        border: `1px solid ${isBooked?'#1e293b':isSelected?'#2563eb':'#1e293b'}`,
-                        cursor: isBooked?'not-allowed':'pointer',
-                      }} onClick={()=>!isBooked&&bookingForm.date&&setBookingForm({...bookingForm,timeSlot:slot})}>
-                        <Clock size={11} style={{marginBottom:'2px'}}/>
-                        <div>{slot}</div>
-                        {isBooked&&<div style={{fontSize:'9px',color:'#ef4444',marginTop:'1px',letterSpacing:'0.5px'}}>BOOKED</div>}
-                      </div>
-                    );
-                  })}
+              {filteredDoctors.length === 0 && (
+                <div style={s.emptyState}>
+                  <Search size={36} color="#1e293b"/>
+                  <p style={{color:'#475569',margin:'12px 0 0 0'}}>No doctors found</p>
                 </div>
-                {!bookingForm.date&&<p style={{color:'#334155',fontSize:'12px',marginTop:'8px'}}>Select a date first to check availability</p>}
+              )}
 
-                <label style={s.label}>Symptoms / Reason <span style={{color:'#334155',textTransform:'none',letterSpacing:'0'}}>(optional)</span></label>
-                <textarea style={{...s.input,height:'90px',resize:'none'}}
-                  placeholder="Describe your symptoms or reason for visit..."
-                  onChange={e=>setBookingForm({...bookingForm,symptoms:e.target.value})}/>
-
-                <button className="book-btn" style={{...s.bookBtn,marginTop:'20px',padding:'13px',borderRadius:'10px',fontSize:'14px'}} type="submit">
-                  Confirm Booking
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* My Appointments */}
-        {view === 'appointments' && (
-          <div>
-            <div style={s.pageHeader}>
-              <div>
-                <h2 style={s.heading}>My Appointments</h2>
-                <p style={s.subheading}>{appointments.length} total appointments</p>
-              </div>
-            </div>
-
-            {appointments.length === 0 && (
-              <div style={s.emptyState}>
-                <Inbox size={40} color="#1e293b"/>
-                <p style={{color:'#475569',margin:'12px 0 0 0',fontSize:'15px'}}>No appointments yet</p>
-                <button style={{...s.bookBtn,marginTop:'16px',width:'auto',padding:'10px 20px'}}
-                  onClick={()=>setView('doctors')}>Find a Doctor</button>
-              </div>
-            )}
-
-            {appointments.map(apt => {
-              const sc = statusConfig[apt.status] || statusConfig.pending;
-              return (
-                <div key={apt._id} style={s.aptCard}>
-                  <div style={s.aptLeft}>
-                    <img src={apt.doctor?.photo||avatarUrl(apt.doctor?.user?.name)}
-                      alt="doctor" style={s.aptAvatar}
-                      onError={e=>e.target.src=avatarUrl(apt.doctor?.user?.name)}/>
-                    <div>
-                      <h4 style={{margin:'0 0 4px 0',color:'#f1f5f9',fontSize:'15px',fontWeight:'600'}}>
-                        Dr. {apt.doctor?.user?.name}
-                      </h4>
-                      <div style={{display:'flex',flexDirection:'column',gap:'3px'}}>
-                        <div style={s.aptMeta}><Stethoscope size={12} color="#475569"/><span>{apt.doctor?.specialization}</span></div>
-                        <div style={s.aptMeta}><Calendar size={12} color="#475569"/><span>{apt.date}</span><Clock size={12} color="#475569"/><span>{apt.timeSlot}</span></div>
-                        {apt.symptoms&&<div style={s.aptMeta}><AlertCircle size={12} color="#475569"/><span>{apt.symptoms}</span></div>}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={s.aptRight}>
-                    <span style={{...s.statusBadge,background:sc.bg,color:sc.color,border:`1px solid ${sc.border}`,display:'flex',alignItems:'center',gap:'4px'}}>
-                      {sc.icon}{apt.status}
-                    </span>
-                    <div style={{display:'flex',gap:'6px'}}>
-                      <button style={s.printBtn} onClick={()=>printConfirmation(apt)}>
-                        <Printer size={13}/>
-                      </button>
-                      {apt.status==='pending'&&(
-                        <button style={s.cancelBtn} onClick={()=>cancelAppointment(apt._id)}>
-                          <X size={13}/> Cancel
+              {/* Horizontal Doctor Cards */}
+              <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                {filteredDoctors.map(doc => (
+                  <div key={doc._id} className="doc-card" style={s.docCard}>
+                    <img
+                      src={doc.photo||avatarUrl(doc.user?.name)}
+                      alt={doc.user?.name}
+                      style={{...s.docCardImg,...(isMobile?{width:'70px',height:'70px'}:{})}}
+                      onError={e=>e.target.src=avatarUrl(doc.user?.name)}
+                    />
+                    <div style={s.docCardBody}>
+                      <div style={s.docCardTop}>
+                        <div>
+                          <h3 style={s.docName}>Dr. {doc.user?.name}</h3>
+                          <span style={s.specBadge}>{doc.specialization}</span>
+                        </div>
+                        <button className="book-btn" style={{...s.bookBtn,...(isMobile?{padding:'8px 12px',fontSize:'12px'}:{})}}
+                          onClick={()=>setSelectedDoctor(doc)}>
+                          Book
                         </button>
-                      )}
+                      </div>
+                      <div style={s.docCardMeta}>
+                        <div style={s.metaItem}><Building2 size={13} color="#475569"/><span>{doc.department}</span></div>
+                        {doc.roomNumber && <div style={s.metaItem}><DoorOpen size={13} color="#475569"/><span>{doc.roomNumber}</span></div>}
+                        <div style={s.metaItem}><IndianRupee size={13} color="#10b981"/><span style={{color:'#10b981',fontWeight:'600'}}>₹{doc.fees} per visit</span></div>
+                        <div style={s.metaItem}><Star size={13} color="#475569"/><span>{doc.experience} yrs exp</span></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Booking Form */}
+          {view === 'doctors' && selectedDoctor && (
+            <div style={{maxWidth: isMobile?'100%':'520px'}}>
+              <button style={s.backBtn} onClick={()=>setSelectedDoctor(null)}>
+                <ChevronLeft size={16}/> Back
+              </button>
+              <h2 style={{...s.heading,...(isMobile?{fontSize:'18px'}:{})}}>Book Appointment</h2>
+              <div style={s.card}>
+                <div style={s.bookingDocInfo}>
+                  <img src={selectedDoctor.photo||avatarUrl(selectedDoctor.user?.name)}
+                    alt={selectedDoctor.user?.name}
+                    style={{...s.bookingAvatar,...(isMobile?{width:'52px',height:'52px'}:{})}}
+                    onError={e=>e.target.src=avatarUrl(selectedDoctor.user?.name)}/>
+                  <div>
+                    <h3 style={{margin:'0 0 6px 0',color:'#f1f5f9',fontSize: isMobile?'15px':'16px',fontWeight:'600'}}>
+                      Dr. {selectedDoctor.user?.name}
+                    </h3>
+                    <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+                      <div style={s.metaItem}><Stethoscope size={13} color="#475569"/><span style={{color:'#94a3b8',fontSize:'13px'}}>{selectedDoctor.specialization}</span></div>
+                      <div style={s.metaItem}><Building2 size={13} color="#475569"/><span style={{color:'#94a3b8',fontSize:'13px'}}>{selectedDoctor.department}</span></div>
+                      <div style={s.metaItem}><IndianRupee size={13} color="#10b981"/><span style={{color:'#10b981',fontSize:'13px',fontWeight:'600'}}>₹{selectedDoctor.fees} per visit</span></div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                <div style={s.divider}/>
+
+                <form onSubmit={bookAppointment}>
+                  <label style={s.label}>Select Date</label>
+                  <select style={s.input} onChange={e=>handleDateChange(e.target.value)} required>
+                    <option value="">Choose an available date</option>
+                    {getAvailableDates(selectedDoctor.availableDays).map(date=>(
+                      <option key={date} value={date}>{date}</option>
+                    ))}
+                  </select>
+
+                  <label style={s.label}>Select Time Slot</label>
+                  <div style={{...s.slotGrid,...(isMobile?{gridTemplateColumns:'repeat(3,1fr)'}:{})}}>
+                    {selectedDoctor.availableTimeSlots.map(slot => {
+                      const isBooked = bookedSlots.includes(slot);
+                      const isSelected = bookingForm.timeSlot === slot;
+                      return (
+                        <div key={slot} style={{
+                          ...s.slotBtn,
+                          background: isBooked?'#0d1117':isSelected?'#2563eb':'transparent',
+                          color: isBooked?'#1e293b':isSelected?'white':'#64748b',
+                          border:`1px solid ${isBooked?'#1e293b':isSelected?'#2563eb':'#1e293b'}`,
+                          cursor: isBooked?'not-allowed':'pointer',
+                        }} onClick={()=>!isBooked&&bookingForm.date&&setBookingForm({...bookingForm,timeSlot:slot})}>
+                          <Clock size={11}/>
+                          <div>{slot}</div>
+                          {isBooked&&<div style={{fontSize:'9px',color:'#ef4444'}}>BOOKED</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!bookingForm.date&&<p style={{color:'#334155',fontSize:'12px',marginTop:'8px'}}>Select a date first</p>}
+
+                  <label style={s.label}>Symptoms <span style={{color:'#334155',textTransform:'none',letterSpacing:'0'}}>(optional)</span></label>
+                  <textarea style={{...s.input,height:'80px',resize:'none'}}
+                    placeholder="Describe your symptoms..."
+                    onChange={e=>setBookingForm({...bookingForm,symptoms:e.target.value})}/>
+
+                  <button className="book-btn" style={{...s.bookBtn,marginTop:'16px',padding:'13px',borderRadius:'10px',fontSize:'14px',width:'100%'}} type="submit">
+                    Confirm Booking
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* My Appointments */}
+          {view === 'appointments' && (
+            <div>
+              <div style={s.pageHeader}>
+                <div>
+                  <h2 style={{...s.heading,...(isMobile?{fontSize:'18px'}:{})}}>My Appointments</h2>
+                  <p style={s.subheading}>{appointments.length} total</p>
+                </div>
+              </div>
+
+              {appointments.length === 0 && (
+                <div style={s.emptyState}>
+                  <Inbox size={36} color="#1e293b"/>
+                  <p style={{color:'#475569',margin:'12px 0 0 0'}}>No appointments yet</p>
+                  <button style={{...s.bookBtn,marginTop:'16px',width:'auto',padding:'10px 20px'}}
+                    onClick={()=>setView('doctors')}>Find a Doctor</button>
+                </div>
+              )}
+
+              {appointments.map(apt => {
+                const sc = statusConfig[apt.status] || statusConfig.pending;
+                return (
+                  <div key={apt._id} style={{...s.aptCard,...(isMobile?{flexDirection:'column',alignItems:'flex-start',gap:'12px'}:{})}}>
+                    <div style={s.aptLeft}>
+                      <img src={apt.doctor?.photo||avatarUrl(apt.doctor?.user?.name)}
+                        alt="doctor" style={s.aptAvatar}
+                        onError={e=>e.target.src=avatarUrl(apt.doctor?.user?.name)}/>
+                      <div>
+                        <h4 style={{margin:'0 0 4px 0',color:'#f1f5f9',fontSize:'14px',fontWeight:'600'}}>
+                          Dr. {apt.doctor?.user?.name}
+                        </h4>
+                        <div style={{display:'flex',flexDirection:'column',gap:'3px'}}>
+                          <div style={s.aptMeta}><Stethoscope size={12} color="#475569"/><span>{apt.doctor?.specialization}</span></div>
+                          <div style={s.aptMeta}><Calendar size={12} color="#475569"/><span>{apt.date}</span><Clock size={12} color="#475569"/><span>{apt.timeSlot}</span></div>
+                          {apt.symptoms&&<div style={s.aptMeta}><AlertCircle size={12} color="#475569"/><span>{apt.symptoms}</span></div>}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{...s.aptRight,...(isMobile?{width:'100%',flexDirection:'row',justifyContent:'space-between',alignItems:'center'}:{})}}>
+                      <span style={{...s.statusBadge,background:sc.bg,color:sc.color,border:`1px solid ${sc.border}`,display:'flex',alignItems:'center',gap:'4px'}}>
+                        {sc.icon}{apt.status}
+                      </span>
+                      <div style={{display:'flex',gap:'6px'}}>
+                        <button style={s.printBtn} onClick={()=>printConfirmation(apt)}>
+                          <Printer size={13}/>
+                        </button>
+                        {apt.status==='pending'&&(
+                          <button style={s.cancelBtn} onClick={()=>cancelAppointment(apt._id)}>
+                            <X size={13}/> Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -382,7 +430,8 @@ function PatientDashboard() {
 const s = {
   page:{display:'flex',minHeight:'100vh',background:'#080c14',fontFamily:'"Inter",system-ui,sans-serif'},
   sidebar:{width:'240px',background:'#0d1117',borderRight:'1px solid #161d2a',padding:'20px 16px',display:'flex',flexDirection:'column'},
-  logoArea:{display:'flex',alignItems:'center',gap:'10px',padding:'8px 4px',marginBottom:'20px'},
+  overlay:{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.6)',zIndex:999},
+  logoArea:{display:'flex',alignItems:'center',gap:'10px'},
   logoIcon:{width:'32px',height:'32px',background:'#2563eb',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center'},
   logoText:{color:'#f1f5f9',fontWeight:'700',fontSize:'16px',letterSpacing:'-0.3px'},
   profileCard:{display:'flex',alignItems:'center',gap:'10px',padding:'12px',background:'#0f172a',borderRadius:'10px',border:'1px solid #161d2a',marginBottom:'16px'},
@@ -394,33 +443,38 @@ const s = {
   navActive:{background:'#161d2a',border:'none',color:'#f1f5f9',padding:'9px 12px',textAlign:'left',cursor:'pointer',borderRadius:'7px',fontSize:'13px',marginBottom:'2px',width:'100%',display:'flex',alignItems:'center',gap:'9px',fontFamily:'"Inter",sans-serif'},
   navBadge:{marginLeft:'auto',background:'#2563eb',color:'white',borderRadius:'10px',padding:'1px 6px',fontSize:'11px',fontWeight:'700'},
   logoutBtn:{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',background:'transparent',border:'1px solid #161d2a',color:'#475569',padding:'9px',borderRadius:'8px',cursor:'pointer',fontSize:'13px',width:'100%',fontFamily:'"Inter",sans-serif'},
-  main:{flex:1,padding:'36px 40px',overflowY:'auto'},
-  pageHeader:{marginBottom:'24px'},
+  closeBtn:{background:'transparent',border:'none',color:'#64748b',cursor:'pointer',padding:'4px',display:'flex',alignItems:'center'},
+  mobileTopBar:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',background:'#0d1117',borderBottom:'1px solid #161d2a',position:'sticky',top:0,zIndex:100},
+  menuBtn:{background:'transparent',border:'none',color:'#94a3b8',cursor:'pointer',display:'flex',alignItems:'center',padding:'4px'},
+  main:{flex:1,overflowY:'auto'},
+  pageHeader:{marginBottom:'20px'},
   heading:{color:'#f1f5f9',margin:'0 0 4px 0',fontSize:'20px',fontWeight:'700',letterSpacing:'-0.3px'},
   subheading:{color:'#334155',fontSize:'13px',margin:0},
   searchWrapper:{position:'relative',marginBottom:'14px'},
   searchInput:{width:'100%',padding:'11px 14px 11px 42px',background:'#0d1117',border:'1px solid #161d2a',borderRadius:'9px',color:'#f1f5f9',fontSize:'13px',boxSizing:'border-box'},
-  pillRow:{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'24px'},
+  pillRow:{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'20px'},
   pill:{padding:'5px 12px',borderRadius:'20px',cursor:'pointer',fontSize:'12px',background:'transparent',color:'#475569',border:'1px solid #161d2a',fontFamily:'"Inter",sans-serif'},
   pillActive:{background:'#2563eb15',color:'#60a5fa',border:'1px solid #2563eb40'},
-  grid:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(210px,1fr))',gap:'14px'},
-  docCard:{background:'#0d1117',border:'1px solid #161d2a',borderRadius:'12px',padding:'20px',textAlign:'center',transition:'all 0.2s'},
-  docAvatar:{width:'72px',height:'72px',borderRadius:'50%',marginBottom:'12px',objectFit:'cover',border:'2px solid #161d2a'},
-  docName:{margin:'0 0 6px 0',fontSize:'14px',color:'#f1f5f9',fontWeight:'600'},
+  // Horizontal doctor card
+  docCard:{background:'#0d1117',border:'1px solid #161d2a',borderRadius:'12px',padding:'16px',display:'flex',gap:'16px',alignItems:'flex-start',transition:'border-color 0.2s, transform 0.2s'},
+  docCardImg:{width:'88px',height:'88px',borderRadius:'10px',objectFit:'cover',border:'1px solid #161d2a',flexShrink:0},
+  docCardBody:{flex:1,minWidth:0},
+  docCardTop:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'10px'},
+  docCardMeta:{display:'flex',flexWrap:'wrap',gap:'8px 16px'},
+  docName:{margin:'0 0 6px 0',fontSize:'15px',color:'#f1f5f9',fontWeight:'600'},
   specBadge:{background:'#2563eb15',color:'#60a5fa',border:'1px solid #2563eb30',padding:'2px 9px',borderRadius:'20px',fontSize:'11px',fontWeight:'600'},
-  docMeta:{display:'flex',flexDirection:'column',gap:'5px',margin:'10px 0 14px 0',textAlign:'left'},
-  docMetaRow:{display:'flex',alignItems:'center',gap:'6px',color:'#475569',fontSize:'12px'},
-  bookBtn:{background:'#2563eb',color:'white',border:'none',padding:'9px',borderRadius:'8px',cursor:'pointer',width:'100%',fontWeight:'600',fontSize:'13px',fontFamily:'"Inter",sans-serif'},
-  card:{background:'#0d1117',border:'1px solid #161d2a',borderRadius:'12px',padding:'24px'},
+  metaItem:{display:'flex',alignItems:'center',gap:'5px',color:'#475569',fontSize:'12px'},
+  bookBtn:{background:'#2563eb',color:'white',border:'none',padding:'9px 16px',borderRadius:'8px',cursor:'pointer',fontWeight:'600',fontSize:'13px',fontFamily:'"Inter",sans-serif',whiteSpace:'nowrap'},
+  card:{background:'#0d1117',border:'1px solid #161d2a',borderRadius:'12px',padding:'20px'},
   bookingDocInfo:{display:'flex',gap:'14px',alignItems:'flex-start'},
   bookingAvatar:{width:'64px',height:'64px',borderRadius:'10px',objectFit:'cover',border:'1px solid #161d2a',flexShrink:0},
   backBtn:{display:'flex',alignItems:'center',gap:'4px',background:'transparent',border:'none',color:'#475569',cursor:'pointer',fontSize:'13px',marginBottom:'16px',padding:0,fontFamily:'"Inter",sans-serif'},
   label:{display:'block',color:'#334155',fontSize:'11px',marginBottom:'7px',marginTop:'16px',textTransform:'uppercase',letterSpacing:'0.6px',fontWeight:'600'},
   input:{width:'100%',padding:'10px 13px',background:'#080c14',border:'1px solid #161d2a',borderRadius:'8px',color:'#f1f5f9',fontSize:'13px',boxSizing:'border-box'},
   slotGrid:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'7px',marginTop:'8px'},
-  slotBtn:{padding:'8px 4px',borderRadius:'7px',textAlign:'center',fontSize:'12px',fontWeight:'500',transition:'all 0.15s',display:'flex',flexDirection:'column',alignItems:'center'},
-  aptCard:{background:'#0d1117',border:'1px solid #161d2a',borderRadius:'11px',padding:'16px 18px',marginBottom:'10px',display:'flex',justifyContent:'space-between',alignItems:'center'},
-  aptLeft:{display:'flex',alignItems:'center',gap:'14px'},
+  slotBtn:{padding:'8px 4px',borderRadius:'7px',textAlign:'center',fontSize:'12px',fontWeight:'500',transition:'all 0.15s',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'},
+  aptCard:{background:'#0d1117',border:'1px solid #161d2a',borderRadius:'11px',padding:'16px',marginBottom:'10px',display:'flex',justifyContent:'space-between',alignItems:'center'},
+  aptLeft:{display:'flex',alignItems:'center',gap:'12px'},
   aptAvatar:{width:'44px',height:'44px',borderRadius:'9px',objectFit:'cover',border:'1px solid #161d2a',flexShrink:0},
   aptMeta:{display:'flex',alignItems:'center',gap:'5px',color:'#475569',fontSize:'12px'},
   aptRight:{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'8px'},
