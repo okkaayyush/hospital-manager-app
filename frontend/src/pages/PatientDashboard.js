@@ -191,6 +191,7 @@ function PatientDashboard() {
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
         .doc-card:hover { border-color: #334155 !important; }
         .book-btn:hover { background: #1d4ed8 !important; }
+        .sidebar { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
       `}</style>
 
       {/* Mobile overlay */}
@@ -442,7 +443,7 @@ const s = {
   nav:{background:'transparent',border:'none',color:'#475569',padding:'9px 12px',textAlign:'left',cursor:'pointer',borderRadius:'7px',fontSize:'13px',marginBottom:'2px',width:'100%',display:'flex',alignItems:'center',gap:'9px',fontFamily:'"Inter",sans-serif'},
   navActive:{background:'#161d2a',border:'none',color:'#f1f5f9',padding:'9px 12px',textAlign:'left',cursor:'pointer',borderRadius:'7px',fontSize:'13px',marginBottom:'2px',width:'100%',display:'flex',alignItems:'center',gap:'9px',fontFamily:'"Inter",sans-serif'},
   navBadge:{marginLeft:'auto',background:'#2563eb',color:'white',borderRadius:'10px',padding:'1px 6px',fontSize:'11px',fontWeight:'700'},
-  logoutBtn:{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',background:'transparent',border:'1px solid #161d2a',color:'#475569',padding:'9px',borderRadius:'8px',cursor:'pointer',fontSize:'13px',width:'100%',fontFamily:'"Inter",sans-serif'},
+  logoutBtn:{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',background:'transparent',border:'1px solid #161d2a',color:'#475569',padding:'9px',borderRadius:'8px',cursor:'pointer',fontSize:'13px',width:'100%',fontFamily:'"Inter",sans-serif', marginBottom:'env(safe-area-inset-bottom, 16px)'},
   closeBtn:{background:'transparent',border:'none',color:'#64748b',cursor:'pointer',padding:'4px',display:'flex',alignItems:'center'},
   mobileTopBar:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',background:'#0d1117',borderBottom:'1px solid #161d2a',position:'sticky',top:0,zIndex:100},
   menuBtn:{background:'transparent',border:'none',color:'#94a3b8',cursor:'pointer',display:'flex',alignItems:'center',padding:'4px'},
@@ -484,6 +485,7 @@ const s = {
   emptyState:{textAlign:'center',padding:'60px 20px',display:'flex',flexDirection:'column',alignItems:'center'},
   toast:{background:'#0a1f12',color:'#4ade80',border:'1px solid #14532d',padding:'11px 16px',borderRadius:'9px',marginBottom:'20px',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:'13px'},
   toastClose:{background:'transparent',border:'none',color:'#4ade80',cursor:'pointer',display:'flex',alignItems:'center'},
+  
 };
 
 export default PatientDashboard;
