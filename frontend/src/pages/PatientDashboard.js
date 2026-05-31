@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import API from '../api';
 import {
   Search, Calendar, Clock, Stethoscope, Building2, DoorOpen,
-  IndianRupee, Star, LogOut, User, ChevronLeft, Printer,
+  IndianRupee, Star, LogOut, ChevronLeft, Printer,
   X, CheckCircle, AlertCircle, XCircle, Inbox, Hospital
 } from 'lucide-react';
 
