@@ -1,5 +1,5 @@
 
-# MediBook — Hospital Appointment System
+# MediBook - Hospital Appointment System
 
 A full-stack web application that lets patients book appointments with doctors, doctors manage their schedules, and admins oversee the entire system.
 
