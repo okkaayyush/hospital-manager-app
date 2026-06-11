@@ -13,20 +13,20 @@ A full-stack web application that lets patients book appointments with doctors, 
 
 ## Tech Stack
 
-- **Frontend** — React, deployed on Vercel
-- **Backend** — Node.js + Express, deployed on Render
-- **Database** — MongoDB Atlas
-- **Auth** — JWT (JSON Web Tokens)
-- **File Storage** — Cloudinary (doctor profile photos)
+- **Frontend** - React, deployed on Vercel
+- **Backend** - Node.js + Express, deployed on Render
+- **Database** - MongoDB Atlas
+- **Auth** - JWT (JSON Web Tokens)
+- **File Storage** - Cloudinary (doctor profile photos)
 
 ## Features
 
 - Role-based access for patients, doctors, and admins
-- Real-time slot blocking — booked slots are marked and unavailable
+- Real-time slot blocking - booked slots are marked and unavailable
 - Doctor photo upload with in-browser cropping
 - Appointment confirmation print/download
 - Search and filter doctors by specialization
-- Cascade delete — removing a user removes all their associated data
+- Cascade delete - removing a user removes all their associated data
 - Fully mobile responsive with hamburger navigation
 
 ## Live Demo
